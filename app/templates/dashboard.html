@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>مرحباً بعودتك، {{ current_user.display_name or current_user.username }}</h2>
+    <p>إليك ما يحدث على شبكتك المراقبة — البيانات من مصادر فعلية فقط.</p>
+  </div>
+  <div class="status-pills">
+    <span class="pill">📅 <span id="live-clock">—</span></span>
+    {% if stats.capture_active %}
+      <span class="pill ok">🛡 المراقبة نشطة</span>
+    {% else %}
+      <span class="pill warn">⏸ وضع الاستعداد</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if stats.standby %}
+<div class="standby-banner">
+  النظام في <strong>وضع الاستعداد</strong>: لم يبدأ الالتقاط بعد ولا توجد تنبيهات حقيقية.
+  ابدأ المراقبة من صفحة <a href="{{ url_for('sensors.list_sensors') }}">المستشعرات</a>.
+  الأرقام أدناه تعكس صفراً حقيقياً وليست بيانات وهمية.
+</div>
+{% endif %}
+
+<div class="kpi-grid">
+  <div class="kpi-card red" style="animation-delay:.05s">
+    <div class="label">إجمالي التنبيهات</div>
+    <div class="value">{{ stats.total_alerts }}</div>
+    <div class="delta">حقيقية فقط · حرجة: {{ stats.critical_alerts }}</div>
+  </div>
+  <div class="kpi-card orange" style="animation-delay:.1s">
+    <div class="label">فحص المنافذ</div>
+    <div class="value">{{ stats.alerts_by_type.port_scan }}</div>
+    <div class="delta">Port Scanning</div>
+  </div>
+  <div class="kpi-card purple" style="animation-delay:.15s">
+    <div class="label">القوة الغاشمة</div>
+    <div class="value">{{ stats.alerts_by_type.brute_force }}</div>
+    <div class="delta">Brute Force</div>
+  </div>
+  <div class="kpi-card blue" style="animation-delay:.2s">
+    <div class="label">DoS / DDoS</div>
+    <div class="value">{{ stats.alerts_by_type.dos }}</div>
+    <div class="delta">مؤشرات الارتفاع</div>
+  </div>
+  <div class="kpi-card green" style="animation-delay:.25s">
+    <div class="label">حركة خبيثة</div>
+    <div class="value">{{ stats.alerts_by_type.malware }}</div>
+    <div class="delta">Malware Indicators</div>
+  </div>
+  <div class="kpi-card teal" style="animation-delay:.3s">
+    <div class="label">اتصالات مشبوهة</div>
+    <div class="value">{{ stats.alerts_by_type.suspicious }}</div>
+    <div class="delta">Suspicious</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h3>نظرة عامة على حركة الشبكة</h3>
+      <span class="pill">24 ساعة</span>
+    </div>
+    {% if timeline.has_data %}
+    <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
+    {% else %}
+    <div class="empty-state">لا توجد بيانات حركة بعد. ابدأ الالتقاط لعرض المخطط.</div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h3>توزيع أنواع الهجمات</h3>
+    </div>
+    {% if distribution.has_data %}
+    <div class="chart-wrap sm"><canvas id="distChart"></canvas></div>
+    <ul class="detail-list" style="margin-top:.75rem">
+      {% for item in distribution.items %}
+      <li>
+        <span>{{ item.label_ar }} <small>({{ item.label_en }})</small></span>
+        <strong>{{ item.count }} · {{ item.percent }}%</strong>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">لا توجد تنبيهات حقيقية لتوزيعها.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h3>أحدث التنبيهات</h3>
+      <a href="{{ url_for('alerts.list_alerts') }}">عرض الكل ←</a>
+    </div>
+    {% if recent_alerts %}
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الوقت</th>
+            <th>النوع</th>
+            <th>المصدر</th>
+            <th>الوجهة</th>
+            <th>التفاصيل</th>
+            <th>الخطورة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in recent_alerts %}
+          <tr>
+            <td>{{ a.observed_at.strftime('%H:%M:%S') if a.observed_at else '—' }}</td>
+            <td><span class="badge type-{{ a.attack_type }}">{{ a.attack_type_ar or a.attack_type }}</span></td>
+            <td><a href="{{ url_for('main.ip_investigation', ip=a.src_ip) }}">{{ a.src_ip or '—' }}</a></td>
+            <td>{{ a.dst_ip or '—' }}</td>
+            <td><a href="{{ url_for('alerts.alert_details', alert_id=a.id) }}">{{ a.title[:40] }}{% if a.title|length > 40 %}…{% endif %}</a></td>
+            <td><span class="badge {{ a.severity }}">{{ a.severity }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">لا توجد تنبيهات بعد.</div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>أكثر العناوين إثارة للتنبيهات</h3></div>
+    {% if offenders %}
+    <table class="data-table">
+      <thead><tr><th>عنوان IP</th><th>العدد</th><th>النوع</th></tr></thead>
+      <tbody>
+        {% for o in offenders %}
+        <tr>
+          <td><a href="{{ url_for('main.ip_investigation', ip=o.ip) }}">{{ o.ip }}</a></td>
+          <td>{{ o.count }}</td>
+          <td><span class="badge type-{{ o.attack_type }}">{{ o.attack_type }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">لا توجد بيانات.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-3">
+  <div class="card">
+    <div class="card-header"><h3>خريطة الشبكة الحية</h3></div>
+    <div class="map-panel">
+      <span class="node" style="top:35%;right:25%;color:#22c55e;background:#22c55e"></span>
+      <span class="node" style="top:48%;right:55%;color:#f59e0b;background:#f59e0b"></span>
+      <span class="node" style="top:60%;right:40%;color:#ef4444;background:#ef4444"></span>
+    </div>
+    <div style="margin-top:.75rem;font-size:.82rem;color:var(--text-muted)">
+      الحزم: <strong>{{ stats.total_packets }}</strong> · الحجم: <strong>{{ stats.total_bytes }}</strong> بايت
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>حالة الخدمات</h3></div>
+    <ul class="detail-list">
+      <li><span>المستشعر</span><strong>{{ stats.sensor_status }}</strong></li>
+      <li><span>Scapy</span><strong>{% if scapy.available %}متاح{% else %}غير متاح{% endif %}</strong></li>
+      <li><span>Suricata</span><strong>{% if suricata.file_exists %}مهيأ{% elif suricata.configured %}ملف مفقود{% else %}غير مهيأ{% endif %}</strong></li>
+      <li><span>آخر نشاط</span><strong>{{ stats.last_activity or '—' }}</strong></li>
+      <li><span>آخر تحديث</span><strong id="last-refresh">الآن</strong></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>وحدات الكشف</h3></div>
+    <ul class="module-list">
+      {% for m in modules %}
+      <li>
+        <span>{{ m.name_ar }}</span>
+        {% if m.enabled and m.status == 'active' %}
+          <span class="on-tag">مفعّلة</span>
+        {% elif m.status == 'needs_data' %}
+          <span class="off-tag">تحتاج بيانات</span>
+        {% else %}
+          <span class="off-tag">{{ m.status }}</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.NIDS_DASH = {
+  timeline: {{ timeline|tojson }},
+  distribution: {{ distribution|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

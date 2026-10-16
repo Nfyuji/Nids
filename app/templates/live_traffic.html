@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}الحركة الحية{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>مراقبة حركة الشبكة</h2>
+    <p>تحديث دوري دون إعادة تحميل — لا تُعرض حزم وهمية.</p>
+  </div>
+  <div class="status-pills">
+    <span class="pill" id="pps-pill">PPS: {{ '%.1f'|format(pps) }}</span>
+    {% if sensor and sensor.capture_active %}
+      <span class="pill ok">التقاط نشط</span>
+    {% else %}
+      <span class="pill warn">التقاط متوقف</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if not scapy.available %}
+<div class="standby-banner">
+  Scapy غير متاح{% if scapy.error %}: {{ scapy.error }}{% endif %}.
+  على Windows ثبّت <strong>Npcap</strong> ثم <code>pip install scapy</code> وشغّل بصلاحيات مناسبة.
+</div>
+{% elif not sensor or not sensor.capture_active %}
+<div class="standby-banner">
+  الالتقاط غير نشط. ابدأ من <a href="{{ url_for('sensors.list_sensors') }}">المستشعرات</a>.
+  {% if sensor and sensor.last_error %}<br>آخر خطأ: {{ sensor.last_error }}{% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header">
+    <h3>الاتصالات الحديثة</h3>
+    <span class="pill" id="traffic-updated">—</span>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="data-table" id="traffic-table">
+      <thead>
+        <tr>
+          <th>الوقت</th>
+          <th>المصدر</th>
+          <th>الوجهة</th>
+          <th>المنافذ</th>
+          <th>البروتوكول</th>
+          <th>الحزم</th>
+          <th>الحجم</th>
+          <th>الأعلام</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in events %}
+        <tr>
+          <td>{{ e.observed_at.strftime('%H:%M:%S') if e.observed_at else '—' }}</td>
+          <td>{{ e.src_ip }}</td>
+          <td>{{ e.dst_ip }}</td>
+          <td>{{ e.src_port or '—' }} → {{ e.dst_port or '—' }}</td>
+          <td>{{ e.protocol }}</td>
+          <td>{{ e.packet_count }}</td>
+          <td>{{ e.byte_count }}</td>
+          <td>{{ e.flags or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr id="empty-row"><td colspan="8" class="empty-state">لا توجد حركة مرصودة بعد.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/live_traffic.js') }}"></script>
+{% endblock %}

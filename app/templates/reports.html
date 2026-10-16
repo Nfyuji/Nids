@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}التقارير{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>التقارير</h2>
+    <p>ملخص الفترة المحددة — دون خلط البيانات التجريبية.</p>
+  </div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <a class="btn btn-ghost" href="{{ url_for('reports.export_csv', days=days) }}">تصدير CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('reports.export_report_pdf', days=days) }}">تصدير PDF</a>
+  </div>
+</div>
+
+<form class="filters" method="get">
+  <select name="days">
+    {% for d in [1,7,14,30] %}
+    <option value="{{ d }}" {% if days==d %}selected{% endif %}>آخر {{ d }} يوم</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-primary" type="submit">تحديث</button>
+</form>
+
+{% if not has_data %}
+<div class="standby-banner">لا توجد بيانات حقيقية في هذه الفترة.</div>
+{% endif %}
+
+<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+  <div class="kpi-card red"><div class="label">التنبيهات</div><div class="value">{{ total }}</div></div>
+  <div class="kpi-card blue"><div class="label">حزم الحركة</div><div class="value">{{ traffic_packets }}</div></div>
+  <div class="kpi-card orange"><div class="label">حرجة</div><div class="value">{{ by_sev.get('critical', 0) }}</div></div>
+  <div class="kpi-card green"><div class="label">المستشعر</div><div class="value" style="font-size:1rem">{{ sensor.status if sensor else '—' }}</div></div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>توزيع الخطورة</h3></div>
+    <ul class="detail-list">
+      {% for sev, cnt in by_sev.items() %}
+      <li><span>{{ sev }}</span><strong>{{ cnt }}</strong></li>
+      {% else %}
+      <li><span>لا بيانات</span><strong>0</strong></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>أنواع الهجمات</h3></div>
+    <ul class="detail-list">
+      {% for t, cnt in by_type.items() %}
+      <li><span>{{ t }}</span><strong>{{ cnt }}</strong></li>
+      {% else %}
+      <li><span>لا بيانات</span><strong>0</strong></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-top:1rem">
+  <div class="card">
+    <div class="card-header"><h3>عناوين مرتبطة</h3></div>
+    <table class="data-table">
+      <thead><tr><th>IP</th><th>العدد</th><th>النوع</th></tr></thead>
+      <tbody>
+        {% for o in offenders %}
+        <tr><td>{{ o.ip }}</td><td>{{ o.count }}</td><td>{{ o.attack_type }}</td></tr>
+        {% else %}
+        <tr><td colspan="3" class="empty-state">لا بيانات</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>قيود مصادر البيانات</h3></div>
+    <ul class="module-list">
+      {% for lim in limitations %}
+      <li><span>{{ lim }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

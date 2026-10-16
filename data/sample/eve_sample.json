@@ -1,0 +1,1 @@
+{"timestamp":"2024-06-01T10:00:00.000000+0000","event_type":"alert","src_ip":"198.51.100.40","dest_ip":"10.0.0.8","src_port":50100,"dest_port":80,"proto":"TCP","alert":{"action":"allowed","gid":1,"signature_id":2100498,"rev":5,"signature":"GPL SCAN nmap XMAS","category":"Attempted Information Leak","severity":2}}

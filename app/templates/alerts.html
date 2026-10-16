@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}التنبيهات{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>التنبيهات الأمنية</h2>
+    <p>عرض وفلترة التنبيهات الحقيقية — البيانات التجريبية منفصلة واختيارية.</p>
+  </div>
+  <div>
+    <a class="btn btn-ghost" href="{{ url_for('alerts.export_csv', **request.args) }}">تصدير CSV</a>
+  </div>
+</div>
+
+<form class="filters" method="get">
+  <input type="search" name="q" placeholder="بحث..." value="{{ filters.get('q','') }}">
+  <input type="text" name="ip" placeholder="عنوان IP" value="{{ filters.get('ip','') }}">
+  <select name="attack_type">
+    <option value="">كل الأنواع</option>
+    {% for t in ['port_scan','brute_force','dos','ddos','malware','suspicious'] %}
+    <option value="{{ t }}" {% if filters.get('attack_type')==t %}selected{% endif %}>{{ t }}</option>
+    {% endfor %}
+  </select>
+  <select name="severity">
+    <option value="">كل الخطورة</option>
+    {% for s in ['critical','high','medium','low','info'] %}
+    <option value="{{ s }}" {% if filters.get('severity')==s %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <select name="source_type">
+    <option value="">كل المصادر</option>
+    {% for s in ['detection_engine','suricata','auth_log','scapy','manual'] %}
+    <option value="{{ s }}" {% if filters.get('source_type')==s %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <input type="date" name="date_from" value="{{ filters.get('date_from','') }}">
+  <input type="date" name="date_to" value="{{ filters.get('date_to','') }}">
+  <label class="pill" style="cursor:pointer">
+    <input type="checkbox" name="include_simulated" value="1" {% if filters.get('include_simulated')=='1' %}checked{% endif %}>
+    إظهار التجريبي
+  </label>
+  <button class="btn btn-primary" type="submit">تصفية</button>
+</form>
+
+<div class="card">
+  {% if alerts %}
+  <div style="overflow-x:auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الوقت</th>
+          <th>النوع</th>
+          <th>المصدر</th>
+          <th>الوجهة</th>
+          <th>المنافذ</th>
+          <th>البروتوكول</th>
+          <th>الخطورة</th>
+          <th>القاعدة</th>
+          <th>المصدر</th>
+          <th>الحالة</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alerts %}
+        <tr>
+          <td>{{ a.id }}</td>
+          <td>{{ a.observed_at.strftime('%Y-%m-%d %H:%M') if a.observed_at else '—' }}</td>
+          <td>
+            <span class="badge type-{{ a.attack_type }}">{{ a.attack_type_ar or a.attack_type }}</span>
+            {% if a.is_simulated %}<span class="badge sim">تجريبي</span>{% endif %}
+          </td>
+          <td>{{ a.src_ip or '—' }}</td>
+          <td>{{ a.dst_ip or '—' }}</td>
+          <td>{{ a.src_port or '—' }} → {{ a.dst_port or '—' }}</td>
+          <td>{{ a.protocol or '—' }}</td>
+          <td><span class="badge {{ a.severity }}">{{ a.severity }}</span></td>
+          <td>{{ a.detection_rule }}</td>
+          <td>{{ a.source_type }}</td>
+          <td>{{ a.status }}</td>
+          <td><a href="{{ url_for('alerts.alert_details', alert_id=a.id) }}">تفاصيل</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    {% if pagination.has_prev %}
+      <a href="{{ url_for('alerts.list_alerts', page=pagination.prev_num, **request.args) }}">السابق</a>
+    {% endif %}
+    <span class="current">{{ pagination.page }} / {{ pagination.pages or 1 }}</span>
+    {% if pagination.has_next %}
+      <a href="{{ url_for('alerts.list_alerts', page=pagination.next_num, **request.args) }}">التالي</a>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty-state">لا توجد تنبيهات مطابقة. إن لم يبدأ الرصد فالقائمة فارغة عمداً.</div>
+  {% endif %}
+</div>
+{% endblock %}

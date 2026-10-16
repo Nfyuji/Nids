@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="{{ ui_theme|default('light') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}NIDS{% endblock %} | نظام كشف التسلل</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">NIDS</div>
+      <div>
+        <h1>NIDS</h1>
+        <p>نظام كشف التسلل للشبكات</p>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="{{ url_for('main.landing') }}"><span class="icon">⌂</span> الرئيسية</a></li>
+      <li><a href="{{ url_for('main.dashboard') }}" class="{% if request.endpoint == 'main.dashboard' %}active{% endif %}"><span class="icon">▣</span> لوحة التحكم</a></li>
+      <li>
+        <a href="{{ url_for('alerts.list_alerts') }}" class="{% if request.endpoint and request.endpoint.startswith('alerts.') %}active{% endif %}">
+          <span class="icon">⚑</span> التنبيهات
+          {% if alert_badge_count %}<span class="badge-count">{{ alert_badge_count }}</span>{% endif %}
+        </a>
+      </li>
+      <li><a href="{{ url_for('main.live_traffic') }}" class="{% if request.endpoint == 'main.live_traffic' %}active{% endif %}"><span class="icon">◈</span> الحركة الحية</a></li>
+      <li><a href="{{ url_for('main.attack_analysis') }}" class="{% if request.endpoint == 'main.attack_analysis' %}active{% endif %}"><span class="icon">◎</span> تحليل الهجمات</a></li>
+      <li><a href="{{ url_for('main.ip_investigation') }}" class="{% if request.endpoint == 'main.ip_investigation' %}active{% endif %}"><span class="icon">◉</span> تحقيق IP</a></li>
+      <li><a href="{{ url_for('main.attack_types') }}" class="{% if request.endpoint == 'main.attack_types' %}active{% endif %}"><span class="icon">⬡</span> أنواع الهجمات</a></li>
+      <li><a href="{{ url_for('sensors.list_sensors') }}" class="{% if request.endpoint and request.endpoint.startswith('sensors.') %}active{% endif %}"><span class="icon">⬢</span> المستشعرات</a></li>
+      <li><a href="{{ url_for('reports.reports_page') }}" class="{% if request.endpoint and request.endpoint.startswith('reports.') %}active{% endif %}"><span class="icon">▤</span> التقارير</a></li>
+      <li><a href="{{ url_for('settings.settings_page') }}" class="{% if request.endpoint and request.endpoint.startswith('settings.') %}active{% endif %}"><span class="icon">⚙</span> الإعدادات</a></li>
+    </ul>
+    <div class="sidebar-status">
+      <div><span class="dot"></span> حالة النظام</div>
+      <div style="font-size:0.78rem;color:#94a3b8;margin-top:0.35rem">
+        {% if current_user.is_authenticated %}متصل — {{ current_user.display_name or current_user.username }}{% else %}غير متصل{% endif %}
+      </div>
+      <svg class="sparkline" viewBox="0 0 100 28" preserveAspectRatio="none">
+        <polyline fill="none" stroke="#22c55e" stroke-width="2"
+          points="0,20 10,18 20,14 30,16 40,10 50,12 60,8 70,11 80,6 90,9 100,4"/>
+      </svg>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <div class="topbar">
+      <button class="icon-btn mobile-toggle" type="button" onclick="document.getElementById('sidebar').classList.toggle('open')" aria-label="القائمة">☰</button>
+      <form class="search-box" action="{{ url_for('alerts.list_alerts') }}" method="get">
+        <span>⌕</span>
+        <input type="search" name="q" placeholder="بحث في التنبيهات أو عناوين IP..." value="{{ request.args.get('q','') }}">
+      </form>
+      <div class="topbar-actions">
+        <form method="post" action="{{ url_for('settings.set_theme') }}" style="display:inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="theme" value="{{ 'light' if ui_theme == 'dark' else 'dark' }}">
+          <button class="icon-btn" type="submit" title="تبديل الوضع">{% if ui_theme == 'dark' %}☀{% else %}☾{% endif %}</button>
+        </form>
+        <a class="icon-btn" href="{{ url_for('alerts.list_alerts') }}" title="التنبيهات">
+          🔔
+          {% if alert_badge_count %}<span class="badge-count" style="position:absolute;top:-4px;left:-4px">{{ alert_badge_count }}</span>{% endif %}
+        </a>
+        {% if current_user.is_authenticated %}
+        <div class="user-chip">
+          <div class="avatar">{{ (current_user.display_name or current_user.username)[0] }}</div>
+          <div class="meta">
+            <strong>{{ current_user.display_name or current_user.username }}</strong>
+            <span>{% if current_user.role == 'admin' %}مسؤول{% elif current_user.role == 'analyst' %}محلل{% else %}مشاهد{% endif %}</span>
+          </div>
+        </div>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-ghost" type="submit">خروج</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-wrap">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,39 @@
+# بيئة بايثون
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# أسرار وإعدادات محلية
+.env
+.env.local
+*.pem
+
+# قاعدة البيانات والملفات المحلية
+instance/*.db
+instance/*.db-*
+*.sqlite3
+
+# اختبارات وميديا مؤقتة
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# نظام التشغيل والمحرر
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# سجلات
+*.log

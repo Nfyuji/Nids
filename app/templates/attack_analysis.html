@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}تحليل الهجمات{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>تحليل الهجمات</h2>
+    <p>مؤشرات وأنماط — نستخدم «نشاط مشبوه» أو «مؤشر محتمل» ما لم تتوفر أدلة كافية.</p>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>توزيع الأنواع</h3></div>
+    {% if distribution.has_data %}
+    <div class="chart-wrap"><canvas id="analysisDist"></canvas></div>
+    {% else %}
+    <div class="empty-state">لا توجد بيانات تحليل بعد.</div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>التطور الزمني</h3></div>
+    {% if timeline.has_data %}
+    <div class="chart-wrap"><canvas id="analysisTimeline"></canvas></div>
+    {% else %}
+    <div class="empty-state">لا يوجد تطور زمني لعرضه.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>المصادر الأكثر تكراراً</h3></div>
+    {% if offenders %}
+    <table class="data-table">
+      <thead><tr><th>IP</th><th>العدد</th><th>النوع الغالب</th></tr></thead>
+      <tbody>
+        {% for o in offenders %}
+        <tr>
+          <td><a href="{{ url_for('main.ip_investigation', ip=o.ip) }}">{{ o.ip }}</a></td>
+          <td>{{ o.count }}</td>
+          <td><span class="badge type-{{ o.attack_type }}">{{ o.attack_type }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">لا توجد مصادر.</div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>أحدث الأدلة</h3></div>
+    {% if recent_alerts %}
+    <ul class="detail-list">
+      {% for a in recent_alerts[:12] %}
+      <li>
+        <span>
+          <a href="{{ url_for('alerts.alert_details', alert_id=a.id) }}">#{{ a.id }}</a>
+          · {{ a.detection_rule }}
+          {% if a.confidence is not none %}· ثقة {{ '%.0f'|format(a.confidence*100) }}%{% endif %}
+        </span>
+        <strong>{{ a.attack_type_ar }}</strong>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">لا توجد أدلة بعد.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+window.NIDS_ANALYSIS = {
+  timeline: {{ timeline|tojson }},
+  distribution: {{ distribution|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+{% endblock %}

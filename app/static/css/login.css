@@ -1,0 +1,240 @@
+/* صفحة الدخول — متناسقة مع الصفحة الرئيسية */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap');
+
+.login-body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-family: "IBM Plex Sans Arabic", sans-serif;
+}
+
+.login-shell {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.login-visual {
+  position: relative;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.login-visual-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transform: scale(1.05);
+  animation: loginZoom 14s ease-out forwards;
+}
+
+.login-visual-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 18, 36, 0.35) 0%, rgba(8, 18, 36, 0.78) 100%),
+    linear-gradient(90deg, transparent 40%, rgba(8, 18, 36, 0.25) 100%);
+  pointer-events: none;
+}
+
+.login-visual-copy {
+  position: absolute;
+  inset-inline-start: 2rem;
+  inset-inline-end: 2rem;
+  bottom: 2.25rem;
+  z-index: 1;
+  animation: loginRise 0.8s ease both;
+}
+
+.login-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #f8fafc;
+  text-decoration: none;
+  font-family: "Space Grotesk", "IBM Plex Sans Arabic", sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+}
+
+.login-home-link:hover {
+  color: #e0f2fe;
+}
+
+.login-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #0ea5e9, #0369a1);
+  color: #fff;
+  font-family: "Space Grotesk", "IBM Plex Sans Arabic", sans-serif;
+  font-weight: 700;
+  font-size: 0.68rem;
+  display: grid;
+  place-items: center;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.35);
+}
+
+.login-mark-lg {
+  width: 52px;
+  height: 52px;
+  font-size: 0.78rem;
+  border-radius: 14px;
+  margin: 0 auto 1.1rem;
+}
+
+.login-visual-slogan {
+  margin: 0;
+  max-width: 16ch;
+  color: #e2e8f0;
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.login-panel {
+  display: grid;
+  place-items: center;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(ellipse at 80% 0%, rgba(14, 165, 233, 0.08), transparent 45%),
+    #f8fafc;
+}
+
+.login-panel-inner {
+  width: 100%;
+  max-width: 400px;
+  animation: loginRise 0.75s 0.1s ease both;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.login-header h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.login-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.login-form .form-group {
+  margin-bottom: 1.05rem;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.login-form .form-control {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  padding: 0.8rem 0.95rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #0f172a;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-form .form-control:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+}
+
+.login-form .form-control::placeholder {
+  color: #94a3b8;
+}
+
+.login-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 0.35rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.98rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(14, 165, 233, 0.28);
+}
+
+.login-footer-links {
+  margin-top: 1.6rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.login-footer-links a {
+  color: #0284c7;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.login-footer-links a:hover {
+  color: #0369a1;
+  text-decoration: underline;
+}
+
+.login-panel .flash {
+  margin-bottom: 1rem;
+  border-radius: 12px;
+}
+
+@keyframes loginRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes loginZoom {
+  from { transform: scale(1.08); }
+  to { transform: scale(1); }
+}
+
+@media (max-width: 900px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .login-visual {
+    min-height: 38vh;
+  }
+
+  .login-visual-slogan {
+    max-width: none;
+    font-size: 1.25rem;
+  }
+
+  .login-visual-copy {
+    bottom: 1.25rem;
+    inset-inline-start: 1.25rem;
+    inset-inline-end: 1.25rem;
+  }
+}

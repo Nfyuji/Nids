@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}تفاصيل التنبيه{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>تنبيه #{{ alert.id }}</h2>
+    <p>{{ alert.title }}
+      {% if alert.is_simulated %}<span class="badge sim">تجريبي</span>{% endif %}
+    </p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('alerts.list_alerts') }}">عودة</a>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>تفاصيل الحدث</h3></div>
+    <ul class="detail-list">
+      <li><span>الوقت</span><strong>{{ alert.observed_at }}</strong></li>
+      <li><span>النوع</span><strong>{{ alert.attack_type_ar }} ({{ alert.attack_type }})</strong></li>
+      <li><span>المصدر → الوجهة</span><strong>{{ alert.src_ip or '—' }} → {{ alert.dst_ip or '—' }}</strong></li>
+      <li><span>المنافذ</span><strong>{{ alert.src_port or '—' }} → {{ alert.dst_port or '—' }}</strong></li>
+      <li><span>البروتوكول</span><strong>{{ alert.protocol or '—' }}</strong></li>
+      <li><span>الخطورة</span><strong><span class="badge {{ alert.severity }}">{{ alert.severity }}</span></strong></li>
+      <li><span>الثقة</span><strong>{% if alert.confidence is not none %}{{ '%.0f'|format(alert.confidence*100) }}% — احتمال بناءً على الأدلة، وليست تأكيداً{% else %}—{% endif %}</strong></li>
+      <li><span>قاعدة الكشف</span><strong>{{ alert.detection_rule }}</strong></li>
+      <li><span>مصدر التنبيه</span><strong>{{ alert.source_type }}</strong></li>
+      <li><span>معرف خارجي</span><strong>{{ alert.external_sid or '—' }}</strong></li>
+      <li><span>الحالة</span><strong>{{ alert.status }}</strong></li>
+    </ul>
+    <p style="margin-top:1rem;color:var(--text-muted);font-size:.9rem">{{ alert.description or '' }}</p>
+    <pre style="background:var(--input-bg);padding:1rem;border-radius:10px;overflow:auto;font-size:.78rem;direction:ltr;text-align:left">{{ alert.get_evidence() | tojson(indent=2) }}</pre>
+    {% if alert.get_thresholds() %}
+    <h4 style="margin-top:1rem">العتبات المستخدمة</h4>
+    <pre style="background:var(--input-bg);padding:1rem;border-radius:10px;overflow:auto;font-size:.78rem;direction:ltr;text-align:left">{{ alert.get_thresholds() | tojson(indent=2) }}</pre>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>التحقيق</h3></div>
+    {% if current_user.can_investigate() %}
+    <form method="post" action="{{ url_for('alerts.change_status', alert_id=alert.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label>تغيير الحالة</label>
+        <select name="status" class="form-control">
+          {% for s in statuses %}
+          <option value="{{ s }}" {% if alert.status==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ملاحظة المحلل</label>
+        <textarea name="note" class="form-control" rows="3" placeholder="يُحفظ في سجل التحقيق دون تعديل السجل الأصلي"></textarea>
+      </div>
+      <button class="btn btn-primary" type="submit">حفظ الحالة</button>
+    </form>
+    {% else %}
+    <p class="empty-state">صلاحية المشاهدة فقط — لا يمكن تغيير الحالة.</p>
+    {% endif %}
+    <h4 style="margin-top:1.5rem">سجل التعديلات</h4>
+    {% if notes %}
+    <ul class="detail-list">
+      {% for n in notes %}
+      <li>
+        <span>{{ n.created_at.strftime('%Y-%m-%d %H:%M') }} · {{ n.old_status or '—' }} → {{ n.new_status or '—' }}</span>
+        <strong style="max-width:55%;text-align:left;direction:rtl">{{ n.note }}</strong>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">لا توجد ملاحظات بعد.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

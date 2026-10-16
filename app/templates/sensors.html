@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}المستشعرات{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>المستشعرات</h2>
+    <p>إدارة الالتقاط وتكامل Suricata بشكل منفصل لتجنب التعارض.</p>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>حالة Scapy</h3></div>
+    <ul class="detail-list">
+      <li><span>متاح</span><strong>{{ 'نعم' if scapy.available else 'لا' }}</strong></li>
+      <li><span>يعمل</span><strong>{{ 'نعم' if scapy.running else 'لا' }}</strong></li>
+      <li><span>PPS</span><strong>{{ '%.1f'|format(pps) }}</strong></li>
+      <li><span>الواجهات</span><strong style="max-width:60%;word-break:break-all">{{ scapy.interfaces|join(', ') if scapy.interfaces else '—' }}</strong></li>
+    </ul>
+    {% if scapy.hint %}<p class="standby-banner" style="margin-top:1rem">{{ scapy.hint }}</p>{% endif %}
+    {% if scapy.runtime_error %}<p class="flash danger">{{ scapy.runtime_error }}</p>{% endif %}
+    {% if current_user.can_manage() %}
+    <div style="display:flex;gap:.5rem;margin-top:1rem">
+      <form method="post" action="{{ url_for('sensors.start_capture') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-success" type="submit">بدء المراقبة</button>
+      </form>
+      <form method="post" action="{{ url_for('sensors.stop_capture') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger" type="submit">إيقاف</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>تكامل Suricata</h3></div>
+    <ul class="detail-list">
+      <li><span>مهيأ</span><strong>{{ 'نعم' if suricata.configured else 'لا' }}</strong></li>
+      <li><span>الملف موجود</span><strong>{{ 'نعم' if suricata.file_exists else 'لا' }}</strong></li>
+      <li><span>المتابعة</span><strong>{{ 'نعم' if suricata.running else 'لا' }}</strong></li>
+      <li><span>مستورد</span><strong>{{ suricata.events_imported }}</strong></li>
+      <li><span>المسار</span><strong style="max-width:55%;word-break:break-all">{{ suricata.path or '—' }}</strong></li>
+    </ul>
+    {% if suricata.hint %}<p class="standby-banner" style="margin-top:1rem">{{ suricata.hint }}</p>{% endif %}
+    {% if suricata.last_error %}<p class="flash danger">{{ suricata.last_error }}</p>{% endif %}
+    {% if current_user.can_manage() %}
+    <div style="display:flex;gap:.5rem;margin-top:1rem">
+      <form method="post" action="{{ url_for('sensors.start_suricata') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-primary" type="submit">بدء قراءة EVE</button>
+      </form>
+      <form method="post" action="{{ url_for('sensors.stop_suricata') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-ghost" type="submit">إيقاف القراءة</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" style="margin-top:1rem">
+  <div class="card-header"><h3>قائمة المستشعرات</h3></div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>الاسم</th>
+        <th>الجهاز</th>
+        <th>الواجهة</th>
+        <th>الحالة</th>
+        <th>التقاط</th>
+        <th>الحزم</th>
+        <th>أخطاء</th>
+        <th>Suricata</th>
+        <th>آخر نشاط</th>
+        <th>آخر خطأ</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sensors %}
+      <tr>
+        <td>{{ s.name }}</td>
+        <td>{{ s.hostname or '—' }}</td>
+        <td>{{ s.interface or '—' }}</td>
+        <td>{{ s.status }}</td>
+        <td>{{ 'نشط' if s.capture_active else 'متوقف' }}</td>
+        <td>{{ s.packets_captured }}</td>
+        <td>{{ s.capture_errors }}</td>
+        <td>{{ 'متصل' if s.suricata_connected else 'لا' }}</td>
+        <td>{{ s.last_activity or '—' }}</td>
+        <td style="max-width:180px;word-break:break-word">{{ s.last_error or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="10" class="empty-state">لا مستشعرات.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

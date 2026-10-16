@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIDS | عين على الشبكة… قبل أن يراك المهاجم</title>
+  <meta name="description" content="نظام كشف التسلل للشبكات — مراقبة ذكية وحماية واثقة.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+</head>
+<body class="landing-body">
+  <header class="landing-nav">
+    <div class="landing-brand">
+      <span class="landing-mark">NIDS</span>
+      <span class="landing-brand-text">NIDS</span>
+    </div>
+    <div class="landing-nav-actions">
+      {% if current_user.is_authenticated %}
+        <a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">لوحة التحكم</a>
+      {% else %}
+        <a class="btn btn-ghost landing-nav-ghost" href="{{ url_for('auth.login') }}">تسجيل الدخول</a>
+        <a class="btn btn-primary" href="{{ url_for('auth.login') }}">ابدأ المراقبة</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="landing-hero">
+    <div class="landing-hero-media" aria-hidden="true">
+      <img
+        src="{{ url_for('static', filename='img/nids-hero.jpg') }}"
+        alt=""
+        class="landing-hero-img"
+      >
+      <div class="landing-hero-veil"></div>
+    </div>
+
+    <div class="landing-hero-content">
+      <p class="landing-kicker">Network Intrusion Detection System</p>
+      <h1 class="landing-logo-title">NIDS</h1>
+      <p class="landing-slogan">عين على الشبكة… قبل أن يراك المهاجم</p>
+      <p class="landing-lead">مراقبة حركة الشبكة واكتشاف مؤشرات التهديد في لوحة عربية احترافية.</p>
+      <div class="landing-cta">
+        {% if current_user.is_authenticated %}
+          <a class="btn btn-primary landing-cta-main" href="{{ url_for('main.dashboard') }}">الدخول إلى اللوحة</a>
+        {% else %}
+          <a class="btn btn-primary landing-cta-main" href="{{ url_for('auth.login') }}">ابدأ الآن</a>
+          <a class="btn landing-cta-secondary" href="#about">تعرّف على النظام</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="landing-scroll" aria-hidden="true">
+      <span></span>
+    </div>
+  </main>
+
+  <section class="landing-about" id="about">
+    <div class="landing-about-inner">
+      <h2>حماية واضحة. نتائج موثوقة.</h2>
+      <p>يلتقط النظام الحركة، يحلّل الأنماط، ويعرض التنبيهات الحقيقية فقط — بلا أرقام وهمية.</p>
+      <div class="landing-pillars">
+        <article>
+          <h3>كشف ذكي</h3>
+          <p>فحص منافذ، DoS، اتصالات مشبوهة، وتكامل Suricata.</p>
+        </article>
+        <article>
+          <h3>لوحة SOC</h3>
+          <p>واجهة عربية RTL مع وضع فاتح احترافي للمتابعة اليومية.</p>
+        </article>
+        <article>
+          <h3>تحقيق سريع</h3>
+          <p>تنبيهات، حركة حية، وتحليل عناوين IP في مكان واحد.</p>
+        </article>
+      </div>
+      <a class="btn btn-primary" href="{{ url_for('auth.login') if not current_user.is_authenticated else url_for('main.dashboard') }}">
+        {% if current_user.is_authenticated %}افتح لوحة التحكم{% else %}دخول المحللين{% endif %}
+      </a>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <span>NIDS — نظام كشف التسلل للشبكات</span>
+    <span>للشبكات المصرح بمراقبتها فقط</span>
+  </footer>
+</body>
+</html>

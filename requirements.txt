@@ -1,0 +1,12 @@
+Flask==3.0.3
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+SQLAlchemy==2.0.36
+Flask-SQLAlchemy==3.1.1
+python-dotenv==1.0.1
+Werkzeug==3.0.6
+email-validator==2.2.0
+WTForms==3.1.2
+scapy==2.6.0; platform_system!="Windows" or python_version>="3.8"
+pytest==8.3.3
+reportlab==4.2.5

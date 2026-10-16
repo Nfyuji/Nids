@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}أنواع الهجمات{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h2>وحدات الكشف</h2>
+    <p>حالة كل وحدة: مفعّلة، متوقفة، تحتاج مصدر بيانات، أو غير مهيأة.</p>
+  </div>
+</div>
+<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+  {% for r in rules %}
+  <div class="card">
+    <div class="card-header">
+      <h3>{{ r.name_ar }}</h3>
+      {% if r.enabled and r.status == 'active' %}
+        <span class="on-tag">مفعّلة</span>
+      {% elif r.status == 'needs_data' %}
+        <span class="pill warn">تحتاج بيانات</span>
+      {% elif not r.enabled or r.status == 'disabled' %}
+        <span class="off-tag">متوقفة</span>
+      {% else %}
+        <span class="off-tag">{{ r.status }}</span>
+      {% endif %}
+    </div>
+    <p style="color:var(--text-muted);font-size:.88rem;margin:0 0 .75rem">{{ r.name_en }}</p>
+    <p style="font-size:.85rem;color:var(--text-dim)">{{ r.description }}</p>
+    <ul class="detail-list">
+      <li><span>العتبة</span><strong>{{ r.threshold if r.threshold is not none else '—' }}</strong></li>
+      <li><span>النافذة (ث)</span><strong>{{ r.window_seconds if r.window_seconds is not none else '—' }}</strong></li>
+      <li><span>مصدر مطلوب</span><strong>{{ r.requires_source or '—' }}</strong></li>
+    </ul>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
