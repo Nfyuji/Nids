@@ -1,0 +1,179 @@
+/* خريطة الشبكة الحية — طوبولوجيا تفاعلية */
+.nmap-card {
+  margin-bottom: 1rem;
+}
+
+.nmap-wrap {
+  position: relative;
+  height: min(420px, 58vh);
+  min-height: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(14, 165, 233, 0.12), transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(34, 197, 94, 0.08), transparent 40%),
+    radial-gradient(ellipse at 85% 20%, rgba(239, 68, 68, 0.1), transparent 35%),
+    linear-gradient(160deg, #0b1220 0%, #111827 55%, #0f172a 100%);
+}
+
+[data-theme="light"] .nmap-wrap {
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(14, 165, 233, 0.1), transparent 55%),
+    radial-gradient(ellipse at 20% 80%, rgba(34, 197, 94, 0.07), transparent 40%),
+    radial-gradient(ellipse at 85% 20%, rgba(239, 68, 68, 0.08), transparent 35%),
+    linear-gradient(160deg, #e8eef5 0%, #f8fafc 50%, #e2e8f0 100%);
+}
+
+.nmap-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+
+.nmap-wrap canvas:active {
+  cursor: grabbing;
+}
+
+.nmap-hud {
+  position: absolute;
+  inset-inline-start: 0.85rem;
+  top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.nmap-hud .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  backdrop-filter: blur(8px);
+  width: fit-content;
+}
+
+[data-theme="light"] .nmap-hud .chip {
+  background: rgba(255, 255, 255, 0.88);
+  color: #0f172a;
+}
+
+.nmap-hud .pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 10px #22c55e;
+  animation: nmapPulse 1.6s ease-in-out infinite;
+}
+
+.nmap-legend {
+  position: absolute;
+  inset-inline-end: 0.85rem;
+  bottom: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+  max-width: 55%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.nmap-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+  backdrop-filter: blur(6px);
+}
+
+[data-theme="light"] .nmap-legend span {
+  color: #334155;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.nmap-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.nmap-tooltip {
+  position: absolute;
+  z-index: 5;
+  min-width: 160px;
+  max-width: 240px;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.94);
+  color: #f1f5f9;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  font-size: 0.78rem;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.nmap-tooltip.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.nmap-tooltip strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #7dd3fc;
+  font-size: 0.85rem;
+}
+
+.nmap-tooltip .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.2rem 0;
+  color: #cbd5e1;
+}
+
+.nmap-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  z-index: 1;
+}
+
+@keyframes nmapPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
+}
+
+@media (max-width: 800px) {
+  .nmap-wrap {
+    height: 300px;
+  }
+  .nmap-legend {
+    max-width: 100%;
+    inset-inline: 0.5rem;
+  }
+}

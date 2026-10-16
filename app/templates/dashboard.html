@@ -163,18 +163,33 @@
   </div>
 </div>
 
-<div class="grid-3">
-  <div class="card">
-    <div class="card-header"><h3>خريطة الشبكة الحية</h3></div>
-    <div class="map-panel">
-      <span class="node" style="top:35%;right:25%;color:#22c55e;background:#22c55e"></span>
-      <span class="node" style="top:48%;right:55%;color:#f59e0b;background:#f59e0b"></span>
-      <span class="node" style="top:60%;right:40%;color:#ef4444;background:#ef4444"></span>
+<div class="card nmap-card">
+  <div class="card-header">
+    <h3>خريطة الشبكة الحية</h3>
+    <span class="pill">تحديث تلقائي · اضغط عقدة للتحقيق</span>
+  </div>
+  <div class="nmap-wrap" id="nmapWrap">
+    <div class="nmap-hud">
+      <span class="chip"><span class="pulse-dot"></span> بث مباشر</span>
+      <span class="chip">عقد: <strong id="nmapNodeCount">{{ network_map.node_count if network_map else 0 }}</strong></span>
+      <span class="chip">روابط: <strong id="nmapLinkCount">{{ network_map.link_count if network_map else 0 }}</strong></span>
+      <span class="chip">حزم: <strong>{{ stats.total_packets }}</strong></span>
     </div>
-    <div style="margin-top:.75rem;font-size:.82rem;color:var(--text-muted)">
-      الحزم: <strong>{{ stats.total_packets }}</strong> · الحجم: <strong>{{ stats.total_bytes }}</strong> بايت
+    <div class="nmap-empty" id="nmapEmpty" {% if network_map and network_map.nodes %}style="display:none"{% endif %}>
+      لا توجد عقد بعد — شغّل سيناريو العرض أو اكتشاف ARP من المستشعرات.
+    </div>
+    <canvas id="networkMapCanvas" aria-label="خريطة طوبولوجيا الشبكة"></canvas>
+    <div class="nmap-tooltip" id="nmapTooltip"></div>
+    <div class="nmap-legend">
+      <span><i style="background:#0ea5e9"></i> الراوتر</span>
+      <span><i style="background:#22c55e"></i> المستشعر</span>
+      <span><i style="background:#38bdf8"></i> جهاز محلي</span>
+      <span><i style="background:#ef4444"></i> مصدر مشبوه</span>
     </div>
   </div>
+</div>
+
+<div class="grid-2">
   <div class="card">
     <div class="card-header"><h3>حالة الخدمات</h3></div>
     <ul class="detail-list">
@@ -205,12 +220,18 @@
 </div>
 {% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/network-map.css') }}">
+{% endblock %}
+
 {% block scripts %}
 <script>
 window.NIDS_DASH = {
   timeline: {{ timeline|tojson }},
   distribution: {{ distribution|tojson }}
 };
+window.NIDS_MAP = {{ network_map|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/network-map.js') }}"></script>
 {% endblock %}

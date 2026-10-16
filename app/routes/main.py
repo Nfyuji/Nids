@@ -31,6 +31,9 @@ def dashboard():
     sensor = Sensor.query.first()
     # قوائم منفصلة لتجنب تعارض Jinja مع dict.items / السمات
     attack_categories = list(distribution.get("categories") or [])
+    from app.services.network_map import build_network_map
+
+    network_map = build_network_map()
     return render_template(
         "dashboard.html",
         stats=data,
@@ -45,6 +48,7 @@ def dashboard():
         sensor=sensor,
         scapy=capture_manager.scapy_status(),
         suricata=suricata_reader.status(),
+        network_map=network_map,
     )
 
 

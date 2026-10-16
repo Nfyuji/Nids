@@ -79,3 +79,11 @@ def api_sensors():
 @login_required
 def api_ip(ip: str):
     return jsonify(stats_service.ip_investigation(ip))
+
+
+@api_bp.route("/network-map")
+@login_required
+def api_network_map():
+    from app.services.network_map import build_network_map
+
+    return jsonify(build_network_map())
