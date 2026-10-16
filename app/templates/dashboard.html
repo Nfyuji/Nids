@@ -92,7 +92,7 @@
     {% if distribution.has_data %}
     <div class="chart-wrap sm"><canvas id="distChart"></canvas></div>
     <ul class="detail-list" style="margin-top:.75rem">
-      {% for item in distribution.items %}
+      {% for item in distribution.categories %}
       <li>
         <span>{{ item.label_ar }} <small>({{ item.label_en }})</small></span>
         <strong>{{ item.count }} · {{ item.percent }}%</strong>

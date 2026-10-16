@@ -173,7 +173,7 @@ def attack_distribution() -> dict:
                 "percent": round((c / total) * 100, 1) if total else 0,
             }
         )
-    return {"total": total, "items": items, "has_data": total > 0}
+    return {"total": total, "categories": items, "has_data": total > 0}
 
 
 def recent_alerts(limit: int = 10, include_simulated: bool = False):

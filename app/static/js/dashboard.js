@@ -53,11 +53,11 @@ document.addEventListener("DOMContentLoaded", () => {
     new Chart(distEl, {
       type: "doughnut",
       data: {
-        labels: d.items.map((i) => i.label_ar),
+        labels: (d.categories || d.items || []).map((i) => i.label_ar),
         datasets: [
           {
-            data: d.items.map((i) => i.count),
-            backgroundColor: colors.slice(0, d.items.length),
+            data: (d.categories || d.items || []).map((i) => i.count),
+            backgroundColor: colors.slice(0, (d.categories || d.items || []).length),
             borderWidth: 0,
           },
         ],

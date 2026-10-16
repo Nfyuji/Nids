@@ -8,11 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
     new Chart(distEl, {
       type: "bar",
       data: {
-        labels: d.items.map((i) => i.label_ar),
+        labels: (d.categories || d.items || []).map((i) => i.label_ar),
         datasets: [
           {
             label: "العدد",
-            data: d.items.map((i) => i.count),
+            data: (d.categories || d.items || []).map((i) => i.count),
             backgroundColor: ["#f97316", "#a855f7", "#38bdf8", "#22c55e", "#14b8a6"],
             borderRadius: 8,
           },
