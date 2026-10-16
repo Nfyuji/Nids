@@ -8,9 +8,12 @@
 | Branch | `main` |
 | Root Directory | **اتركه فارغاً** (المستودع أصلاً من مجلد المشروع) |
 | Build Command | `pip install -r requirements.txt` |
-| Start Command | `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120` |
+| Start Command | `gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120` |
 
-**لا تستخدم:** `gunicorn your_application.wsgi`
+**لا تستخدم:** `gunicorn app:app` أو `gunicorn your_application.wsgi`  
+السبب: مجلد `app/` يتعارض مع الملف؛ استخدم `wsgi:app`.
+
+أضف أيضاً Environment: `PYTHON_VERSION` = `3.11.9`
 
 ## Environment Variables (مهم)
 
