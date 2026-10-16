@@ -24,6 +24,23 @@ ATTACK_LABELS = {
 }
 
 
+def demo_mode_enabled() -> bool:
+    return bool(get_setting("demo_mode", False))
+
+
+def _alert_stats_query():
+    """في وضع العرض تُعرض البيانات التجريبية مع شارة؛ خارجها الحقيقية فقط."""
+    if demo_mode_enabled():
+        return Alert.query
+    return Alert.query.filter_by(is_simulated=False)
+
+
+def _event_stats_filter():
+    if demo_mode_enabled():
+        return True  # لا فلتر
+    return NetworkEvent.is_simulated.is_(False)
+
+
 def _real_alert_query():
     return Alert.query.filter_by(is_simulated=False)
 
@@ -31,40 +48,40 @@ def _real_alert_query():
 def dashboard_stats() -> dict:
     sensor = Sensor.query.first()
     capture_active = bool(sensor and sensor.capture_active)
-    real_alerts = _real_alert_query()
-    total_alerts = real_alerts.count()
-    critical = real_alerts.filter_by(severity="critical").count()
+    demo = demo_mode_enabled()
+    q = _alert_stats_query()
+    total_alerts = q.count()
+    critical = q.filter_by(severity="critical").count()
+    simulated_count = Alert.query.filter_by(is_simulated=True).count()
 
     packets = 0
     bytes_total = 0
-    if sensor:
+    if sensor and not demo:
         packets = sensor.packets_captured or 0
         bytes_total = sensor.bytes_captured or 0
     else:
-        packets = (
-            db.session.query(func.coalesce(func.sum(NetworkEvent.packet_count), 0))
-            .filter_by(is_simulated=False)
-            .scalar()
-            or 0
-        )
-        bytes_total = (
-            db.session.query(func.coalesce(func.sum(NetworkEvent.byte_count), 0))
-            .filter_by(is_simulated=False)
-            .scalar()
-            or 0
-        )
+        ev_q = db.session.query(func.coalesce(func.sum(NetworkEvent.packet_count), 0))
+        by_q = db.session.query(func.coalesce(func.sum(NetworkEvent.byte_count), 0))
+        if not demo:
+            ev_q = ev_q.filter_by(is_simulated=False)
+            by_q = by_q.filter_by(is_simulated=False)
+        packets = ev_q.scalar() or 0
+        bytes_total = by_q.scalar() or 0
+        if sensor and not demo:
+            packets = sensor.packets_captured or packets
+            bytes_total = sensor.bytes_captured or bytes_total
 
-    by_type = dict(
-        db.session.query(Alert.attack_type, func.count(Alert.id))
-        .filter_by(is_simulated=False)
-        .group_by(Alert.attack_type)
-        .all()
-    )
+    type_q = db.session.query(Alert.attack_type, func.count(Alert.id))
+    if not demo:
+        type_q = type_q.filter_by(is_simulated=False)
+    by_type = dict(type_q.group_by(Alert.attack_type).all())
 
-    standby = not capture_active and total_alerts == 0 and packets == 0
+    standby = not capture_active and total_alerts == 0 and int(packets) == 0 and not demo
 
     return {
         "standby": standby,
+        "demo_mode": demo,
+        "simulated_count": simulated_count,
         "capture_active": capture_active,
         "total_packets": int(packets),
         "total_bytes": int(bytes_total),
@@ -87,11 +104,12 @@ def dashboard_stats() -> dict:
 
 def traffic_timeline(hours: int = 24) -> dict:
     since = datetime.now(timezone.utc) - timedelta(hours=hours)
+    demo = demo_mode_enabled()
+    ev_filters = [NetworkEvent.observed_at >= since]
+    if not demo:
+        ev_filters.append(NetworkEvent.is_simulated.is_(False))
     events = (
-        NetworkEvent.query.filter(
-            NetworkEvent.is_simulated.is_(False),
-            NetworkEvent.observed_at >= since,
-        )
+        NetworkEvent.query.filter(*ev_filters)
         .order_by(NetworkEvent.observed_at.asc())
         .all()
     )
@@ -103,10 +121,13 @@ def traffic_timeline(hours: int = 24) -> dict:
         labels.append(key)
         buckets[key]  # ensure key exists
 
+    alert_q = _alert_stats_query().filter(Alert.observed_at >= since)
     alert_hours = set()
-    for a in _real_alert_query().filter(Alert.observed_at >= since).all():
+    for a in alert_q.all():
         if a.observed_at:
-            alert_hours.add(a.observed_at.replace(minute=0, second=0, microsecond=0).strftime("%H:00"))
+            alert_hours.add(
+                a.observed_at.replace(minute=0, second=0, microsecond=0).strftime("%H:00")
+            )
 
     for ev in events:
         key = ev.observed_at.replace(minute=0, second=0, microsecond=0).strftime("%H:00")
@@ -114,8 +135,7 @@ def traffic_timeline(hours: int = 24) -> dict:
             continue
         buckets[key]["normal"] += ev.packet_count or 1
 
-    # ربط الساعات التي فيها تنبيهات كنشاط مشبوه/خبيث دون تلفيق أرقام
-    for a in _real_alert_query().filter(Alert.observed_at >= since).all():
+    for a in alert_q.all():
         if not a.observed_at:
             continue
         key = a.observed_at.replace(minute=0, second=0, microsecond=0).strftime("%H:00")
@@ -136,12 +156,10 @@ def traffic_timeline(hours: int = 24) -> dict:
 
 
 def attack_distribution() -> dict:
-    rows = (
-        db.session.query(Alert.attack_type, func.count(Alert.id))
-        .filter_by(is_simulated=False)
-        .group_by(Alert.attack_type)
-        .all()
-    )
+    q = db.session.query(Alert.attack_type, func.count(Alert.id))
+    if not demo_mode_enabled():
+        q = q.filter_by(is_simulated=False)
+    rows = q.group_by(Alert.attack_type).all()
     total = sum(c for _, c in rows) or 0
     items = []
     for t, c in rows:
@@ -160,26 +178,31 @@ def attack_distribution() -> dict:
 
 def recent_alerts(limit: int = 10, include_simulated: bool = False):
     q = Alert.query
-    if not include_simulated:
+    if not include_simulated and not demo_mode_enabled():
         q = q.filter_by(is_simulated=False)
     return q.order_by(Alert.observed_at.desc()).limit(limit).all()
 
 
 def top_offenders(limit: int = 8):
+    demo = demo_mode_enabled()
+    q = db.session.query(Alert.src_ip, func.count(Alert.id)).filter(Alert.src_ip.isnot(None))
+    if not demo:
+        q = q.filter(Alert.is_simulated.is_(False))
     rows = (
-        db.session.query(Alert.src_ip, func.count(Alert.id))
-        .filter(Alert.is_simulated.is_(False), Alert.src_ip.isnot(None))
-        .group_by(Alert.src_ip)
+        q.group_by(Alert.src_ip)
         .order_by(func.count(Alert.id).desc())
         .limit(limit)
         .all()
     )
     result = []
     for src_ip, count in rows:
+        tq = db.session.query(Alert.attack_type, func.count(Alert.id)).filter(
+            Alert.src_ip == src_ip
+        )
+        if not demo:
+            tq = tq.filter(Alert.is_simulated.is_(False))
         top_type = (
-            db.session.query(Alert.attack_type, func.count(Alert.id))
-            .filter(Alert.src_ip == src_ip, Alert.is_simulated.is_(False))
-            .group_by(Alert.attack_type)
+            tq.group_by(Alert.attack_type)
             .order_by(func.count(Alert.id).desc())
             .first()
         )
@@ -199,6 +222,8 @@ def detection_modules_status() -> list[dict]:
 
 
 def ip_investigation(ip: str) -> dict:
+    from app.services.local_network import enrich_ip_context
+
     alerts = (
         Alert.query.filter(
             Alert.is_simulated.is_(False),
@@ -248,6 +273,28 @@ def ip_investigation(ip: str) -> dict:
     if severities:
         inferred = max(severities, key=lambda s: severity_rank.get(s, 0))
 
+    try:
+        local_ctx = enrich_ip_context(ip)
+    except Exception as exc:  # noqa: BLE001
+        local_ctx = {
+            "ip": ip,
+            "is_private": False,
+            "roles": [],
+            "gateway": None,
+            "local_ips": [],
+            "arp": None,
+            "ping": None,
+            "blocked_public_scan": True,
+            "message": f"تعذر جمع السياق المحلي: {exc}",
+        }
+    has_local = bool(
+        local_ctx.get("roles")
+        or local_ctx.get("arp")
+        or (local_ctx.get("ping") or {}).get("reachable")
+        or events
+        or alerts
+    )
+
     return {
         "ip": ip,
         "alert_count": len(alerts),
@@ -259,5 +306,7 @@ def ip_investigation(ip: str) -> dict:
         "inferred_severity": inferred,
         "alerts": [a.to_dict() for a in alerts[:50]],
         "events": [e.to_dict() for e in events[:50]],
-        "has_data": bool(alerts or events),
+        "local": local_ctx,
+        "has_data": has_local,
+        "has_capture_data": bool(alerts or events),
     }

@@ -13,11 +13,17 @@ INSTANCE_DIR.mkdir(exist_ok=True)
 load_dotenv(BASE_DIR / ".env")
 
 
+def _database_url() -> str:
+    url = os.environ.get("DATABASE_URL") or f"sqlite:///{INSTANCE_DIR / 'nids.db'}"
+    # Render/Heroku قد تُرجع postgres:// — SQLAlchemy يحتاج postgresql://
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or os.urandom(32).hex()
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", f"sqlite:///{INSTANCE_DIR / 'nids.db'}"
-    )
+    SQLALCHEMY_DATABASE_URI = _database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = True
     SESSION_COOKIE_HTTPONLY = True
@@ -34,9 +40,14 @@ class Config:
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@localhost")
 
-    HOST = os.environ.get("HOST", "127.0.0.1")
+    HOST = os.environ.get("HOST", "0.0.0.0" if os.environ.get("RENDER") else "127.0.0.1")
     PORT = int(os.environ.get("PORT", "5000"))
     DEBUG = os.environ.get("FLASK_DEBUG", "0") == "1"
+    # خلف بروكسي Render (HTTPS)
+    PREFERRED_URL_SCHEME = "https" if os.environ.get("RENDER") else "http"
+    SESSION_COOKIE_SECURE = os.environ.get("RENDER") == "true" or os.environ.get(
+        "SESSION_COOKIE_SECURE", "0"
+    ) == "1"
 
     # عتبات الكشف الافتراضية
     PORT_SCAN_THRESHOLD = int(os.environ.get("PORT_SCAN_THRESHOLD", "20"))

@@ -7,7 +7,7 @@
     <p>ملخص الفترة المحددة — دون خلط البيانات التجريبية.</p>
   </div>
   <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-    <a class="btn btn-ghost" href="{{ url_for('reports.export_csv', days=days) }}">تصدير CSV</a>
+    <a class="btn btn-ghost" href="{{ url_for('reports.export_report_csv', days=days) }}">تصدير CSV</a>
     <a class="btn btn-primary" href="{{ url_for('reports.export_report_pdf', days=days) }}">تصدير PDF</a>
   </div>
 </div>

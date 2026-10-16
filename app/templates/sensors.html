@@ -8,6 +8,58 @@
   </div>
 </div>
 
+{% if current_user.can_investigate() %}
+<div class="card" style="margin-bottom:1rem;border-color:rgba(14,165,233,.35)">
+  <div class="card-header">
+    <h3>وضع عرض مشروع التخرج</h3>
+    <span class="pill {% if demo_mode %}ok{% else %}warn{% endif %}">
+      {% if demo_mode %}العرض مفعّل{% else %}متوقف{% endif %}
+    </span>
+  </div>
+  <p style="margin:0 0 1rem;color:var(--text-muted);font-size:.9rem">
+    لتجربة المناقشة: شخص «مهاجم» في السيناريو التجريبي، وأنت تشاهد التنبيهات على اللوحة.
+    البيانات تحمل شارة <strong>تجريبي</strong> ولا تُخلط مع الرصد الحقيقي عند إطفاء الوضع.
+  </p>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <form method="post" action="{{ url_for('sensors.start_demo') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">تشغيل سيناريو الهجوم التجريبي</button>
+    </form>
+    {% if current_user.can_manage() %}
+    <form method="post" action="{{ url_for('sensors.clear_demo') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-ghost" type="submit">مسح بيانات العرض</button>
+    </form>
+    {% endif %}
+    <a class="btn btn-success" href="{{ url_for('main.dashboard') }}">افتح لوحة التحكم</a>
+  </div>
+</div>
+{% endif %}
+
+{% if lan %}
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header">
+    <h3>اكتشاف شبكة الراوتر (LAN فقط)</h3>
+    {% if current_user.can_investigate() %}
+    <form method="post" action="{{ url_for('sensors.discover_lan') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">اكتشاف الأجهزة عبر ARP</button>
+    </form>
+    {% endif %}
+  </div>
+  <ul class="detail-list">
+    <li><span>الجهاز</span><strong>{{ lan.hostname }}</strong></li>
+    <li><span>IPv4 المحلي</span><strong>{{ lan.local_ips|join(', ') if lan.local_ips else '—' }}</strong></li>
+    <li><span>بوابة الراوتر</span><strong>{{ lan.gateway or '—' }}</strong></li>
+  </ul>
+  <p style="margin:0.75rem 0 0;font-size:.85rem;color:var(--text-muted)">
+    يقرأ جدول ARP المحلي ويستورد الأجهزة الظاهرة على شبكتك فقط — بدون فحص الإنترنت.
+    بعد الاكتشاف افتح
+    <a href="{{ url_for('main.ip_investigation', ip=lan.gateway) if lan.gateway else url_for('main.ip_investigation') }}">تحقيق IP</a>.
+  </p>
+</div>
+{% endif %}
+
 <div class="grid-2">
   <div class="card">
     <div class="card-header"><h3>حالة Scapy</h3></div>

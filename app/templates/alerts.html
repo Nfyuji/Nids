@@ -7,7 +7,7 @@
     <p>عرض وفلترة التنبيهات الحقيقية — البيانات التجريبية منفصلة واختيارية.</p>
   </div>
   <div>
-    <a class="btn btn-ghost" href="{{ url_for('alerts.export_csv', **request.args) }}">تصدير CSV</a>
+    <a class="btn btn-ghost" href="{{ url_for('alerts.export_csv', q=request.args.get('q',''), ip=request.args.get('ip',''), attack_type=request.args.get('attack_type',''), severity=request.args.get('severity',''), source_type=request.args.get('source_type',''), date_from=request.args.get('date_from',''), date_to=request.args.get('date_to',''), include_simulated=request.args.get('include_simulated','')) }}">تصدير CSV</a>
   </div>
 </div>
 
@@ -86,11 +86,11 @@
   </div>
   <div class="pagination">
     {% if pagination.has_prev %}
-      <a href="{{ url_for('alerts.list_alerts', page=pagination.prev_num, **request.args) }}">السابق</a>
+      <a href="{{ url_for('alerts.list_alerts', page=pagination.prev_num, q=request.args.get('q',''), ip=request.args.get('ip',''), attack_type=request.args.get('attack_type',''), severity=request.args.get('severity',''), source_type=request.args.get('source_type',''), date_from=request.args.get('date_from',''), date_to=request.args.get('date_to',''), include_simulated=request.args.get('include_simulated','')) }}">السابق</a>
     {% endif %}
     <span class="current">{{ pagination.page }} / {{ pagination.pages or 1 }}</span>
     {% if pagination.has_next %}
-      <a href="{{ url_for('alerts.list_alerts', page=pagination.next_num, **request.args) }}">التالي</a>
+      <a href="{{ url_for('alerts.list_alerts', page=pagination.next_num, q=request.args.get('q',''), ip=request.args.get('ip',''), attack_type=request.args.get('attack_type',''), severity=request.args.get('severity',''), source_type=request.args.get('source_type',''), date_from=request.args.get('date_from',''), date_to=request.args.get('date_to',''), include_simulated=request.args.get('include_simulated','')) }}">التالي</a>
     {% endif %}
   </div>
   {% else %}

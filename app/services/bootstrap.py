@@ -93,6 +93,7 @@ DEFAULT_SETTINGS = [
     ("alert_dedup_seconds", "120", "int", "نافذة منع تكرار التنبيهات"),
     ("theme_default", "light", "string", "السمة الافتراضية"),
     ("exclude_ips", "127.0.0.1,::1", "string", "عناوين IP مستثناة من الكشف"),
+    ("demo_mode", "false", "bool", "وضع العرض التوضيحي لمشروع التخرج"),
 ]
 
 
@@ -174,6 +175,7 @@ def _ensure_settings(app) -> None:
         "brute_force_window_seconds": str(app.config.get("BRUTE_FORCE_WINDOW_SECONDS", 300)),
         "alert_dedup_seconds": str(app.config.get("ALERT_DEDUP_SECONDS", 120)),
         "theme_default": app.config.get("THEME_DEFAULT", "light"),
+        "demo_mode": "false",
     }
     for key, value, vtype, desc in DEFAULT_SETTINGS:
         if ApplicationSetting.query.filter_by(key=key).first():

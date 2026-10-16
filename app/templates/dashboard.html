@@ -4,11 +4,19 @@
 <div class="page-header">
   <div>
     <h2>مرحباً بعودتك، {{ current_user.display_name or current_user.username }}</h2>
-    <p>إليك ما يحدث على شبكتك المراقبة — البيانات من مصادر فعلية فقط.</p>
+    <p>
+      {% if stats.demo_mode %}
+      وضع العرض التوضيحي مفعّل — تظهر بيانات السيناريو التجريبي بشارة واضحة.
+      {% else %}
+      إليك ما يحدث على شبكتك المراقبة — البيانات الحقيقية فقط.
+      {% endif %}
+    </p>
   </div>
   <div class="status-pills">
     <span class="pill">📅 <span id="live-clock">—</span></span>
-    {% if stats.capture_active %}
+    {% if stats.demo_mode %}
+      <span class="pill warn">🎬 وضع التخرج / تجريبي</span>
+    {% elif stats.capture_active %}
       <span class="pill ok">🛡 المراقبة نشطة</span>
     {% else %}
       <span class="pill warn">⏸ وضع الاستعداد</span>
@@ -16,11 +24,19 @@
   </div>
 </div>
 
-{% if stats.standby %}
+{% if stats.demo_mode %}
+<div class="standby-banner">
+  <strong>سيناريو عرض مشروع التخرج يعمل</strong>
+  — المهاجم التجريبي يظهر في التنبيهات والجداول.
+  السجلات معلّمة كـ «تجريبي». لمسحها: من
+  <a href="{{ url_for('sensors.list_sensors') }}">المستشعرات</a>.
+</div>
+{% elif stats.standby %}
 <div class="standby-banner">
   النظام في <strong>وضع الاستعداد</strong>: لم يبدأ الالتقاط بعد ولا توجد تنبيهات حقيقية.
-  ابدأ المراقبة من صفحة <a href="{{ url_for('sensors.list_sensors') }}">المستشعرات</a>.
-  الأرقام أدناه تعكس صفراً حقيقياً وليست بيانات وهمية.
+  للتجربة السريعة اضغط
+  <a href="{{ url_for('sensors.list_sensors') }}">تشغيل سيناريو الهجوم التجريبي</a>
+  من المستشعرات.
 </div>
 {% endif %}
 
@@ -28,7 +44,7 @@
   <div class="kpi-card red" style="animation-delay:.05s">
     <div class="label">إجمالي التنبيهات</div>
     <div class="value">{{ stats.total_alerts }}</div>
-    <div class="delta">حقيقية فقط · حرجة: {{ stats.critical_alerts }}</div>
+    <div class="delta">{% if stats.demo_mode %}يشمل التجريبي · {% else %}حقيقية فقط · {% endif %}حرجة: {{ stats.critical_alerts }}</div>
   </div>
   <div class="kpi-card orange" style="animation-delay:.1s">
     <div class="label">فحص المنافذ</div>

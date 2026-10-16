@@ -81,12 +81,44 @@ def attack_analysis():
     )
 
 
-@main_bp.route("/ip-investigation")
+@main_bp.route("/ip-investigation", methods=["GET", "POST"])
 @login_required
 def ip_investigation():
+    from flask import flash, redirect, url_for
+    from flask_login import current_user
+
+    from app.services.local_network import get_lan_profile, import_arp_as_events
+
+    if request.method == "POST" and request.form.get("action") == "discover_lan":
+        if current_user.role not in ("admin", "analyst"):
+            flash("صلاحية غير كافية لاكتشاف الشبكة.", "danger")
+            return redirect(url_for("main.ip_investigation"))
+        try:
+            discovered = import_arp_as_events()
+            flash(
+                f"تم اكتشاف الشبكة المحلية: {discovered['hosts_seen']} جهاز / "
+                f"استيراد {discovered['imported']} حدث.",
+                "success",
+            )
+        except Exception as exc:  # noqa: BLE001
+            flash(f"تعذر الاكتشاف: {exc}", "danger")
+        ip_post = (request.form.get("ip") or "").strip()
+        if ip_post:
+            return redirect(url_for("main.ip_investigation", ip=ip_post))
+        return redirect(url_for("main.ip_investigation"))
+
     ip = (request.args.get("ip") or "").strip()
     result = stats_service.ip_investigation(ip) if ip else None
-    return render_template("ip_investigation.html", ip=ip, result=result)
+    sensor = Sensor.query.first()
+    lan = get_lan_profile()
+    return render_template(
+        "ip_investigation.html",
+        ip=ip,
+        result=result,
+        sensor=sensor,
+        scapy=capture_manager.scapy_status(),
+        lan=lan,
+    )
 
 
 @main_bp.route("/attack-types")

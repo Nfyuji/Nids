@@ -1,0 +1,22 @@
+# اختياري: Blueprint لـ Render
+services:
+  - type: web
+    name: Nids
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: THEME_DEFAULT
+        value: light
+      - key: PYTHON_VERSION
+        value: "3.11.9"

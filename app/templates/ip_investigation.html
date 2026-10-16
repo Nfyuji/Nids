@@ -4,37 +4,104 @@
 <div class="page-header">
   <div>
     <h2>التحقيق في عناوين IP</h2>
-    <p>بحث محلي فقط — لا تُنفَّذ استعلامات Threat Intelligence خارجية تلقائياً.</p>
+    <p>فحص الشبكة المحلية (LAN) فقط — بدون استعلامات تهديد خارجية أو فحص الإنترنت.</p>
   </div>
+  {% if current_user.can_investigate() %}
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="discover_lan">
+    <input type="hidden" name="ip" value="{{ ip }}">
+    <button class="btn btn-primary" type="submit">اكتشاف شبكة الراوتر المحلية</button>
+  </form>
+  {% endif %}
 </div>
 
+{% if lan %}
+<div class="card" style="margin-bottom:1rem">
+  <div class="card-header"><h3>شبكتك المحلية الآن</h3></div>
+  <ul class="detail-list">
+    <li><span>هذا الجهاز</span><strong>{{ lan.hostname }}</strong></li>
+    <li><span>عناوين IPv4 المحلية</span><strong>{{ lan.local_ips|join(', ') if lan.local_ips else '—' }}</strong></li>
+    <li><span>بوابة الراوتر</span><strong>{{ lan.gateway or '—' }}</strong></li>
+  </ul>
+  {% if lan.gateway %}
+  <p style="margin:0.75rem 0 0;font-size:.88rem;color:var(--text-muted)">
+    جرّب البحث عن البوابة:
+    <a href="{{ url_for('main.ip_investigation', ip=lan.gateway) }}">{{ lan.gateway }}</a>
+    {% if lan.local_ips %}
+    أو جهازك:
+    <a href="{{ url_for('main.ip_investigation', ip=lan.local_ips[0]) }}">{{ lan.local_ips[0] }}</a>
+    {% endif %}
+  </p>
+  {% endif %}
+</div>
+{% endif %}
+
 <form class="filters" method="get">
-  <input type="text" name="ip" placeholder="مثال: 192.168.1.10" value="{{ ip }}" required style="min-width:220px">
-  <button class="btn btn-primary" type="submit">بحث</button>
+  <input type="text" name="ip" placeholder="مثال: {{ lan.gateway if lan and lan.gateway else '192.168.0.1' }}" value="{{ ip }}" required style="min-width:220px">
+  <button class="btn btn-primary" type="submit">بحث / فحص محلي</button>
 </form>
 
 {% if ip and result %}
-{% if not result.has_data %}
-<div class="standby-banner">لا توجد أحداث أو تنبيهات مرتبطة بـ <strong>{{ ip }}</strong> في البيانات الحقيقية.</div>
-{% else %}
-<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
-  <div class="kpi-card blue"><div class="label">التنبيهات</div><div class="value">{{ result.alert_count }}</div></div>
-  <div class="kpi-card teal"><div class="label">الأحداث</div><div class="value">{{ result.event_count }}</div></div>
-  <div class="kpi-card orange"><div class="label">أول ظهور</div><div class="value" style="font-size:1rem">{{ result.first_seen or '—' }}</div></div>
-  <div class="kpi-card red"><div class="label">خطورة مستنتجة</div><div class="value" style="font-size:1.2rem"><span class="badge {{ result.inferred_severity }}">{{ result.inferred_severity }}</span></div></div>
-</div>
-<div class="grid-2">
-  <div class="card">
-    <div class="card-header"><h3>المنافذ والبروتوكولات</h3></div>
-    <ul class="detail-list">
-      <li><span>المنافذ المرصودة</span><strong>{{ result.ports|join(', ') if result.ports else '—' }}</strong></li>
-      {% for proto, cnt in result.protocols.items() %}
-      <li><span>{{ proto }}</span><strong>{{ cnt }}</strong></li>
-      {% endfor %}
-      <li><span>آخر ظهور</span><strong>{{ result.last_seen or '—' }}</strong></li>
-    </ul>
+  {% set local = result.local %}
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi-card blue"><div class="label">التنبيهات</div><div class="value">{{ result.alert_count }}</div></div>
+    <div class="kpi-card teal"><div class="label">أحداث مرصودة</div><div class="value">{{ result.event_count }}</div></div>
+    <div class="kpi-card green">
+      <div class="label">وصول ICMP</div>
+      <div class="value" style="font-size:1.1rem">
+        {% if local and local.ping %}
+          {{ 'يصل' if local.ping.reachable else 'لا يرد' }}
+        {% else %}—{% endif %}
+      </div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="label">الدور المحلي</div>
+      <div class="value" style="font-size:.95rem">{{ local.roles|join(' · ') if local and local.roles else 'غير مصنّف' }}</div>
+    </div>
   </div>
-  <div class="card">
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><h3>سياق الشبكة المحلية</h3></div>
+      {% if local and not local.is_private %}
+      <div class="standby-banner">{{ local.message }}</div>
+      {% else %}
+      <ul class="detail-list">
+        <li><span>العنوان</span><strong>{{ ip }}</strong></li>
+        <li><span>شبكة خاصة؟</span><strong>{{ 'نعم' if local.is_private else 'لا' }}</strong></li>
+        <li><span>MAC (ARP)</span><strong>{{ local.arp.mac if local.arp else '—' }}</strong></li>
+        <li><span>بوابة شبكتك</span><strong>{{ local.gateway or '—' }}</strong></li>
+        <li><span>فحص Ping</span><strong>{% if local.ping %}{{ 'ناجح' if local.ping.reachable else 'فشل / لا رد' }}{% else %}—{% endif %}</strong></li>
+      </ul>
+      <p style="font-size:.8rem;color:var(--text-dim);margin-top:.75rem">
+        الفحص مقتصر على شبكتك الخاصة. لا يُجرى مسح منافذ ولا استعلام خارجي.
+      </p>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>المنافذ والبروتوكولات من الرصد</h3></div>
+      {% if result.has_capture_data %}
+      <ul class="detail-list">
+        <li><span>المنافذ</span><strong>{{ result.ports|join(', ') if result.ports else '—' }}</strong></li>
+        {% for proto, cnt in result.protocols.items() %}
+        <li><span>{{ proto }}</span><strong>{{ cnt }}</strong></li>
+        {% endfor %}
+        <li><span>أول ظهور</span><strong>{{ result.first_seen or '—' }}</strong></li>
+        <li><span>آخر ظهور</span><strong>{{ result.last_seen or '—' }}</strong></li>
+      </ul>
+      {% else %}
+      <div class="empty-state">
+        لا أحداث التقاط بعد لهذا العنوان.
+        اضغط «اكتشاف شبكة الراوتر المحلية» لاستيراد أجهزة ARP، أو شغّل الالتقاط من المستشعرات.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if result.alerts %}
+  <div class="card" style="margin-top:1rem">
     <div class="card-header"><h3>التنبيهات المرتبطة</h3></div>
     <table class="data-table">
       <thead><tr><th>#</th><th>النوع</th><th>الخطورة</th><th></th></tr></thead>
@@ -50,8 +117,27 @@
       </tbody>
     </table>
   </div>
-</div>
-{% endif %}
+  {% endif %}
+
+  {% if result.events %}
+  <div class="card" style="margin-top:1rem">
+    <div class="card-header"><h3>أحداث مرتبطة (بما فيها ARP المحلي)</h3></div>
+    <table class="data-table">
+      <thead><tr><th>الوقت</th><th>المصدر</th><th>الوجهة</th><th>البروتوكول</th><th>المصدر</th></tr></thead>
+      <tbody>
+        {% for e in result.events %}
+        <tr>
+          <td>{{ e.observed_at }}</td>
+          <td>{{ e.src_ip }}</td>
+          <td>{{ e.dst_ip }}</td>
+          <td>{{ e.protocol }}</td>
+          <td>{{ e.source_type }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
 {% elif ip %}
 <div class="empty-state">تعذر التحليل.</div>
 {% endif %}
