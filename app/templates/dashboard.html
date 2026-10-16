@@ -79,7 +79,7 @@
       <h3>نظرة عامة على حركة الشبكة</h3>
       <span class="pill">24 ساعة</span>
     </div>
-    {% if timeline.has_data %}
+    {% if timeline_has_data %}
     <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
     {% else %}
     <div class="empty-state">لا توجد بيانات حركة بعد. ابدأ الالتقاط لعرض المخطط.</div>
@@ -89,10 +89,10 @@
     <div class="card-header">
       <h3>توزيع أنواع الهجمات</h3>
     </div>
-    {% if distribution.has_data %}
+    {% if distribution_has_data %}
     <div class="chart-wrap sm"><canvas id="distChart"></canvas></div>
     <ul class="detail-list" style="margin-top:.75rem">
-      {% for item in distribution.categories %}
+      {% for item in attack_categories %}
       <li>
         <span>{{ item.label_ar }} <small>({{ item.label_en }})</small></span>
         <strong>{{ item.count }} · {{ item.percent }}%</strong>

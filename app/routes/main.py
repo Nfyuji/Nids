@@ -29,11 +29,16 @@ def dashboard():
     offenders = stats_service.top_offenders(8)
     modules = stats_service.detection_modules_status()
     sensor = Sensor.query.first()
+    # قوائم منفصلة لتجنب تعارض Jinja مع dict.items / السمات
+    attack_categories = list(distribution.get("categories") or [])
     return render_template(
         "dashboard.html",
         stats=data,
         timeline=timeline,
         distribution=distribution,
+        attack_categories=attack_categories,
+        distribution_has_data=bool(distribution.get("has_data")),
+        timeline_has_data=bool(timeline.get("has_data")),
         recent_alerts=recent,
         offenders=offenders,
         modules=modules,
@@ -76,6 +81,8 @@ def attack_analysis():
         "attack_analysis.html",
         distribution=distribution,
         timeline=timeline,
+        distribution_has_data=bool(distribution.get("has_data")),
+        timeline_has_data=bool(timeline.get("has_data")),
         offenders=offenders,
         recent_alerts=recent,
     )

@@ -11,7 +11,7 @@
 <div class="grid-2">
   <div class="card">
     <div class="card-header"><h3>توزيع الأنواع</h3></div>
-    {% if distribution.has_data %}
+    {% if distribution_has_data %}
     <div class="chart-wrap"><canvas id="analysisDist"></canvas></div>
     {% else %}
     <div class="empty-state">لا توجد بيانات تحليل بعد.</div>
@@ -19,7 +19,7 @@
   </div>
   <div class="card">
     <div class="card-header"><h3>التطور الزمني</h3></div>
-    {% if timeline.has_data %}
+    {% if timeline_has_data %}
     <div class="chart-wrap"><canvas id="analysisTimeline"></canvas></div>
     {% else %}
     <div class="empty-state">لا يوجد تطور زمني لعرضه.</div>
