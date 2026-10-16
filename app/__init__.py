@@ -90,3 +90,7 @@ def create_app(config_class=Config):
         ensure_defaults(app)
 
     return app
+
+
+# Gunicorn / Render: `gunicorn app:app` (الحزمة app/ توفّر الخاصية app)
+app = create_app(Config)
